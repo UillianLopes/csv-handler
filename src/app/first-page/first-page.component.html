@@ -1,0 +1,12 @@
+<div>
+  <button (click)="tryNavigate()">
+    Try navigate
+  </button>
+  <button [routerLink]="[{ outlets: { primary: 'first-tab', aux2: 'second-tab' } }]">
+    Try navigate
+  </button>
+  <router-outlet></router-outlet>
+</div>
+<div>
+  <router-outlet name="aux2"></router-outlet>
+</div>
