@@ -1,13 +1,10 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
 
-const routes: Routes = [
-  { path: 'first', loadChildren: () => import('./first-page/first-page.module').then(m => m.FirstPageModule) },
-  { path: 'second', loadChildren: () => import('./second-page/second-page.module').then(m => m.SecondPageModule), outlet: 'aux' },
-];
+const routes: Routes = [];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

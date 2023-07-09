@@ -1,0 +1,13 @@
+:host {
+  height: 100%;
+  width: 100%;
+
+  table {
+    width: 100%;
+  }
+
+  cdk-virtual-scroll-viewport {
+    height: 100%;
+    width: 100%;
+  }
+}

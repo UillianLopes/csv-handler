@@ -1,10 +1,14 @@
-import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
-import {SafeUrl} from "@angular/platform-browser";
-import {HttpClient} from "@angular/common/http";
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, TrackByFunction, } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { ChTableDataSource } from "./ch-table.data-source";
+import { CollectionViewer, ListRange } from '@angular/cdk/collections';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { Store } from './store';
+
 export enum ChTableColumnType {
-  date ='date',
-  text = 'text',
-  number = 'number',
+  date = "date",
+  text = "text",
+  number = "number",
 }
 
 export interface ChTableColumn {
@@ -13,20 +17,42 @@ export interface ChTableColumn {
 }
 
 @Component({
-  selector: 'ch-table',
-  templateUrl: './ch-table.component.html',
-  styleUrls: ['./ch-table.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "ch-table",
+  templateUrl: "./ch-table.component.html",
+  styleUrls: ["./ch-table.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChTableComponent<T> implements OnInit {
-  @Input() columnLabels: Record<string, string> | null = null;
-  @Input() columns: ChTableColumn[] | null = null;
-  @Input() source: SafeUrl | string | T[] | null = null;
+export class ChTableComponent<TDataSource extends ChTableDataSource<any>>
+  extends Store<{ items: readonly any[] }>
+  implements CollectionViewer, OnInit, OnDestroy {
 
-  constructor(
-    private readonly httpClient: HttpClient
-  ) { }
-  ngOnInit() {
+  @Input() dataSource: TDataSource | null = null;
 
+  trackBy: TrackByFunction<any> = (index: number, value: any) => value['CH_ROW_ID'];
+
+  viewChange!: Observable<ListRange>;
+  items$ = this.select(({ items }) => items);
+
+  constructor(private readonly httpClient: HttpClient) {
+    super({
+      items: []
+    })
   }
+
+  ngOnInit(): void {
+    if (!this.dataSource) {
+      return;
+    }
+
+    this.dataSource
+      .connect(this)
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((items) => {
+        this.patchSate({
+          items
+        })
+      });
+  }
+
+
 }

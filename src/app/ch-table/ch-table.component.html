@@ -1,28 +1,30 @@
-<table class="example-table" cdk-table recycleRows [dataSource]="dataSource">
-  <!-- Position Column -->
-  <ng-container cdkColumnDef="position">
-    <th class="example-row" cdk-header-cell *cdkHeaderCellDef> No. </th>
-    <td cdk-cell *cdkCellDef="let element"> {{element.position}} </td>
-  </ng-container>
 
-  <!-- Name Column -->
-  <ng-container cdkColumnDef="name">
-    <th class="example-row" cdk-header-cell *cdkHeaderCellDef> Name </th>
-    <td cdk-cell *cdkCellDef="let element"> {{element.name}} </td>
-  </ng-container>
 
-  <!-- Weight Column -->
-  <ng-container cdkColumnDef="weight">
-    <th class="example-row" cdk-header-cell *cdkHeaderCellDef> Weight </th>
-    <td cdk-cell *cdkCellDef="let element"> {{element.weight}} </td>
-  </ng-container>
+<cdk-virtual-scroll-viewport *ngIf="dataSource; else provideADataSourceTemplate"
+                             cdkScrollable
+                             [itemSize]="20">
 
-  <!-- Symbol Column -->
-  <ng-container cdkColumnDef="symbol">
-    <th class="example-row" cdk-header-cell *cdkHeaderCellDef> Symbol </th>
-    <td cdk-cell *cdkCellDef="let element"> {{element.symbol}} </td>
-  </ng-container>
+  <div *cdkVirtualFor="let item of (items$ | async)!" [style.height.px]="20">
+    {{item | json}}
+  </div>
+<!--  <table class="example-table"-->
+<!--         cdk-table-->
+<!--         recycleRows-->
+<!--         [dataSource]="dataSource"-->
+<!--         [trackBy]="trackBy">-->
 
-  <tr cdk-header-row *cdkHeaderRowDef="displayedColumns"></tr>
-  <tr cdk-row *cdkRowDef="let row; columns: displayedColumns;"></tr>
-</table>
+<!--    <ng-container *ngFor="let column of dataSource.columns$ | async"-->
+<!--                  [cdkColumnDef]="column.key">-->
+<!--      <th class="example-row" cdk-header-cell *cdkHeaderCellDef>-->
+<!--        {{column.label}}-->
+<!--      </th>-->
+<!--      <td cdk-cell *cdkCellDef="let element">{{ element[column.key] }}</td>-->
+<!--    </ng-container>-->
+
+<!--    <tr cdk-header-row cdkVirtualScrollingElement *cdkHeaderRowDef="(dataSource.columnNames$ | async)!"></tr>-->
+<!--    <tr cdk-row cdkVirtualScrollingElement *cdkRowDef="let row; columns: (dataSource.columnNames$ | async)!"></tr>-->
+<!--  </table>-->
+</cdk-virtual-scroll-viewport>
+<ng-template #provideADataSourceTemplate>
+  Please provide a data source
+</ng-template>
