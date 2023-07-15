@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { debounceTime, filter, Observable, of, switchMap, tap, withLatestFrom } from 'rxjs';
+import { filter, Observable, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { v4 } from 'uuid';
 import {
   ChTableDataSourceStore, DATA_TYPES, DataTypes,
@@ -62,12 +62,11 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
         }),
         withLatestFrom(this.page$, this.limit$),
         tap(([result, page, limit]) => {
-          const beginTime = new Date().getTime();
-
           if (!result) {
             return;
           }
 
+          const beginTime = new Date().getTime();
           const lines = result.split('\n');
           let columns: IChDataColumn[]  | null = null;
           let body: TData[] = [];
@@ -178,7 +177,12 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
     })
   ));
 
-  readonly setUrl = this.updater((state, url: string) => ({...state, url }) )
+  readonly setUrl = this.effect((event$: Observable<string>) => event$.pipe(
+    tap((url) => this.patchSate({ url })),
+    tap(() => this.load())
+  ))
+
+  // readonly setUrl = this.updater((state, url: string) => ({ ...state, url }));
 
   readonly changeCase = this.updater((state, stringCase: 'lower' | 'upper', columnKey: string, index?: number) => {
     const data = state.data as any[];

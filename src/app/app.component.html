@@ -49,7 +49,7 @@
         {{col.label}} ({{col.type}})
       </div>
       <true-editable-field *chTableCell="let value">
-        <input trueEditableFieldInput [ngModel]="value | date" type="date">
+        <input trueEditableFieldInput [ngModel]="value | stringToDate | date: 'yyyy-MM-dd'"  type="date">
       </true-editable-field>
     </ng-container>
   </ch-table>

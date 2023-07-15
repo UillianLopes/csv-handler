@@ -10,6 +10,7 @@ import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
 import { EditableFieldComponent } from './controls/editable-field.component';
 import { EditableFieldInputComponent } from './controls/editable-field-input.component';
 import { MenuModule } from './menu/menu.module';
+import { StringToDatePipe } from './string-to-date.pipe';
 
 @NgModule({
   declarations: [AppComponent],
@@ -23,7 +24,8 @@ import { MenuModule } from './menu/menu.module';
     NgxMaskPipe,
     EditableFieldComponent,
     EditableFieldInputComponent,
-    MenuModule
+    MenuModule,
+    StringToDatePipe
   ],
   providers: [
     provideNgxMask()

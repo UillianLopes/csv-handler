@@ -23,7 +23,6 @@ export class AppComponent implements OnInit {
   }
   ngOnInit (): void {
     this.dataSource.setUrl('/assets/table.csv');
-    this.dataSource.load();
   }
 
 }
