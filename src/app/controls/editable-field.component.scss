@@ -1,0 +1,9 @@
+:host {
+  display: block;
+  max-width: 100%;
+  padding: 0 4px;
+
+  &::ng-deep input[chEditableFieldInput] {
+    max-width: 100%;
+  }
+}

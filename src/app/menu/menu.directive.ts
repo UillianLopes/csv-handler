@@ -1,7 +1,8 @@
 
 import { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { Directive, ElementRef, HostListener, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, ElementRef, HostListener, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { combineLatest, filter, fromEvent, merge, Observable, Subject, takeUntil } from 'rxjs';
 
 export enum ChOverlayPosition {
   top,
@@ -45,15 +46,42 @@ const POSITIONS: { [key in ChOverlayPosition]: ConnectedPosition[] } = {
   [ChOverlayPosition.bottom]: [BOTTOM_CENTER, TOP_CENTER, LEFT_CENTER, RIGHT_CENTER],
 }
 
+export function eventOutsideOverlay(
+  eventName: string,
+  overlayRef: OverlayRef,
+  origin: HTMLElement
+): Observable<Event> {
+  return fromEvent<Event>(document, eventName).pipe(
+    filter((event) => {
+      const clickTarget = event.target as HTMLElement;
+
+      const notOrigin = clickTarget !== origin;
+      const notOriginChild = !origin.contains(clickTarget);
+
+      const notOverlay = overlayRef
+        && !overlayRef.overlayElement.contains(clickTarget);
+
+      return notOrigin && notOverlay && notOriginChild;
+    }),
+    takeUntil(overlayRef.detachments())
+  );
+}
+
 @Directive({
-  selector: '[chContextMenu]',
+  selector: '[chMenu]',
 })
-export class ContextMenuDirective {
-  @Input('chContextMenu') template?: TemplateRef<any>;
+export class MenuDirective implements OnInit {
+  private readonly destroyed$ = new Subject<void>();
+
+  @Input('chMenu') template?: TemplateRef<any>;
+
+  @Input() trigger: 'rightClick' | 'click' | 'hover' = 'click';
 
   @Input() position: ChOverlayPosition = ChOverlayPosition.bottom
   @Input() target?: ElementRef<any>;
   @Input() data?: any;
+  @Input() backdropClass?: string;
+  @Input() hasBackdrop = false;
 
   private overlayRef?: OverlayRef;
 
@@ -63,18 +91,28 @@ export class ContextMenuDirective {
     private readonly viewContainerRef: ViewContainerRef
   ) { }
 
-  @HostListener('contextMenu', ['$event'])
-  contextMenu(event: MouseEvent) {
+  ngOnInit (): void {
+    merge(
+      fromEvent<MouseEvent>(this.elementRef.nativeElement, 'contextmenu').pipe(filter(() => this.trigger === 'rightClick')),
+      fromEvent<MouseEvent>(this.elementRef.nativeElement, 'click').pipe(filter(() => this.trigger === 'click')),
+      fromEvent<MouseEvent>(this.elementRef.nativeElement, 'mouseenter').pipe(filter(() => this.trigger === 'hover')),
+    )
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((event) => {
+        event?.stopPropagation();
+        event?.preventDefault();
+        this.open();
+      });
+  }
+
+  open(): void {
     if (!this.template) {
       return;
     }
-    event.preventDefault();
 
-    if (this.overlayRef) {
-      this.overlayRef.detach();
-      this.overlayRef.dispose();
-      this.overlayRef = undefined;
-    }
+    console.log(this.template);
+
+    this.close();
 
     const overlay = this.overlay.create({
       positionStrategy: this.overlay
@@ -83,13 +121,53 @@ export class ContextMenuDirective {
         .withPositions(POSITIONS[this.position]),
       scrollStrategy: this.overlay
         .scrollStrategies
-        .reposition()
+        .reposition(),
+      hasBackdrop: this.hasBackdrop,
+      backdropClass: this.backdropClass
     })
 
-    const portal = new TemplatePortal(this.template, this.viewContainerRef, { $implicit: this.data });
+    const portal = new TemplatePortal(
+      this.template,
+      this.viewContainerRef,
+      { $implicit: this.data, overlayRef: overlay }
+    );
 
     overlay.attach(portal);
 
     this.overlayRef = overlay;
+
+    if (this.hasBackdrop){
+      overlay
+        .backdropClick()
+        .pipe(
+          takeUntil(this.destroyed$),
+          takeUntil(this.overlayRef.detachments())
+        )
+        .subscribe(() => this.close());
+    } else {
+      switch(this.trigger) {
+        case 'click':
+        case 'rightClick':
+          eventOutsideOverlay('click', overlay, this.elementRef.nativeElement)
+            .pipe(takeUntil(this.destroyed$), takeUntil(this.overlayRef.detachments()))
+            .subscribe(() => this.close());
+          break;
+        case 'hover':
+          eventOutsideOverlay('mouseenter', overlay, this.elementRef.nativeElement)
+            .pipe(takeUntil(this.destroyed$), takeUntil(this.overlayRef.detachments()))
+            .subscribe(() => this.close());
+          break;
+      }
+    }
+  }
+
+  close(): void {
+    if (!this.overlayRef) {
+      return;
+    }
+
+    this.overlayRef.detach();
+    this.overlayRef.dispose();
+    this.overlayRef = undefined;
   }
 }

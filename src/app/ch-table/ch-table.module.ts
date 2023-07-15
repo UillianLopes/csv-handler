@@ -7,14 +7,29 @@ import {
   CdkVirtualScrollableElement,
   CdkVirtualScrollViewport
 } from '@angular/cdk/scrolling';
+import { ChCellDirective, ChHeaderCellDirective, ChTableColDirective } from './ch-table-col.directive';
 
 @NgModule({
   declarations: [
-    ChTableComponent
+    ChTableComponent,
+    ChTableColDirective,
+    ChCellDirective,
+    ChHeaderCellDirective
   ],
-  imports: [CommonModule, CdkTableModule, CdkVirtualScrollViewport, CdkFixedSizeVirtualScroll, CdkVirtualScrollableElement, CdkScrollable, CdkVirtualForOf],
+  imports: [
+    CommonModule,
+    CdkTableModule,
+    CdkVirtualScrollViewport,
+    CdkFixedSizeVirtualScroll,
+    CdkVirtualScrollableElement,
+    CdkScrollable,
+    CdkVirtualForOf
+  ],
   exports: [
-    ChTableComponent
+    ChTableComponent,
+    ChTableColDirective,
+    ChCellDirective,
+    ChHeaderCellDirective
   ]
 })
 export class ChTableModule {}

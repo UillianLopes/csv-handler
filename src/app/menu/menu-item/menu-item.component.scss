@@ -1,0 +1,10 @@
+:host {
+  display: block;
+  padding: 4px;
+  width: 100%;
+  cursor: pointer;
+
+  &:hover {
+    background: #cccccc;
+  }
+}

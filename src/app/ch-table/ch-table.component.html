@@ -1,30 +1,66 @@
 
 
-<cdk-virtual-scroll-viewport *ngIf="dataSource; else provideADataSourceTemplate"
-                             cdkScrollable
-                             [itemSize]="20">
 
-  <div *cdkVirtualFor="let item of (items$ | async)!" [style.height.px]="20">
-    {{item | json}}
+<div class="ch-table"
+     cdkVirtualScrollingElement
+     *ngIf="dataSource$() as dataSource; else provideADataSourceTemplate">
+  <div class="ch-table__row ch-table__row--header">
+    <div class="ch-table__col"
+         *ngFor="let column of dataSource.columns$ | async">
+      <ng-container *ngIf="customCols$() as cols; else defaultHeaderCellTemplate">
+        <ng-container *ngIf="cols[column.type] as col; else defaultHeaderCellTemplate">
+          <ng-container *ngIf="col.headerCell as headerCell; else defaultHeaderCellTemplate">
+            <ng-container [ngTemplateOutlet]="headerCell.templateRef"
+                          [ngTemplateOutletContext]="{ $implicit: column }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <ng-template #defaultHeaderCellTemplate>
+        <div class="ch-table__content" >
+          <span>{{column.label}}</span>
+        </div>
+      </ng-template>
+    </div>
   </div>
-<!--  <table class="example-table"-->
-<!--         cdk-table-->
-<!--         recycleRows-->
-<!--         [dataSource]="dataSource"-->
-<!--         [trackBy]="trackBy">-->
 
-<!--    <ng-container *ngFor="let column of dataSource.columns$ | async"-->
-<!--                  [cdkColumnDef]="column.key">-->
-<!--      <th class="example-row" cdk-header-cell *cdkHeaderCellDef>-->
-<!--        {{column.label}}-->
-<!--      </th>-->
-<!--      <td cdk-cell *cdkCellDef="let element">{{ element[column.key] }}</td>-->
-<!--    </ng-container>-->
+  <ng-template #columnsTemplate let-item let-rowIndex="rowIndex">
+    <div class="ch-table__col"
+         *ngFor="let column of dataSource.columns$ | async;">
+      <ng-container *ngIf="customCols$() as cols; else columnTemplate">
+        <ng-container *ngIf="cols[column.type] as col; else columnTemplate">
+          <ng-container *ngIf="col.cell as cell; else columnTemplate">
+            <ng-container [ngTemplateOutlet]="cell.templateRef"
+                          [ngTemplateOutletContext]="{ $implicit: item[column.key], rowIndex: rowIndex, column: column }"></ng-container>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+      <ng-template #columnTemplate>
+        <div class="ch-table__content">
+          {{item[column.key]}}
+        </div>
+      </ng-template>
+    </div>
+  </ng-template>
 
-<!--    <tr cdk-header-row cdkVirtualScrollingElement *cdkHeaderRowDef="(dataSource.columnNames$ | async)!"></tr>-->
-<!--    <tr cdk-row cdkVirtualScrollingElement *cdkRowDef="let row; columns: (dataSource.columnNames$ | async)!"></tr>-->
-<!--  </table>-->
-</cdk-virtual-scroll-viewport>
+  <cdk-virtual-scroll-viewport class="ch-table__body"
+                               cdkScrollable
+                               [itemSize]="itemSize$()"
+                               (scrolledIndexChange)="setCurrentIndex($event)">
+    <div *cdkVirtualFor="let item of items$(); trackBy: trackBy; index as rowIndex;"
+         class="ch-table__row"
+         [style.height.px]="itemSize$()">
+        <ng-container [ngTemplateOutlet]="columnsTemplate"
+                      [ngTemplateOutletContext]="{ $implicit: item, rowIndex: rowIndex,  }">
+        </ng-container>
+    </div>
+  </cdk-virtual-scroll-viewport>
+</div>
+
 <ng-template #provideADataSourceTemplate>
   Please provide a data source
+</ng-template>
+
+<ng-template>
+  <ng-content select="[chTableCol]"></ng-content>
 </ng-template>

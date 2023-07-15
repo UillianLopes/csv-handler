@@ -1,13 +1,58 @@
 :host {
+  display: block;
+
   height: 100%;
   width: 100%;
+  max-height: 100%;
+  max-width: 100%;
 
   table {
     width: 100%;
   }
 
-  cdk-virtual-scroll-viewport {
+  overflow: auto;
+}
+
+.ch-table {
+  $self: &;
+  height: 100%;
+  width: 100%;
+  position: relative;
+
+  &__body {
     height: 100%;
     width: 100%;
+  }
+
+  &__row {
+    width: fit-content;
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid #ccc;
+
+    &--header {
+      background: white;
+      position: sticky;
+      z-index: 2;
+      top: 0;
+    }
+  }
+
+  &__content {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__col {
+    width: 120px;
+    display: flex;
+    align-items: center;
+
+    &:not(:last-child) {
+      border-right: 1px solid #ccc;
+    }
   }
 }

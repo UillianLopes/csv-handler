@@ -1,4 +1,57 @@
 <div class="main">
-  <ch-table [dataSource]="dataSource"></ch-table>
+  <ch-table [dataSource]="dataSource">
+    <ng-container [chTableCol]="DataTypes.text">
+
+      <div *chHeaderTableCell="let col"
+           [chMenu]="textHeaderColumnOptionsTemplate"
+           trigger="rightClick">
+        <ng-template #textHeaderColumnOptionsTemplate let-overlayRef="overlayRef">
+          <ch-menu>
+            <ch-menu-item (click)="changeCase('upper', col.key); overlayRef.detach()">TO UPPER CASE</ch-menu-item>
+            <ch-menu-item (click)="changeCase('lower', col.key); overlayRef.detach()">TO LOWER CASE</ch-menu-item>
+          </ch-menu>
+        </ng-template>
+        {{col.label}} ({{col.type}})
+      </div>
+      <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
+                           [chMenu]="textColumnOptionsTemplate"
+                           trigger="rightClick">
+        <ng-template #textColumnOptionsTemplate let-overlayRef="overlayRef">
+          <ch-menu>
+            <ch-menu-item (click)="changeCase('upper', column.key, rowIndex); overlayRef.detach()">TO UPPER CASE</ch-menu-item>
+            <ch-menu-item (click)="changeCase('lower', column.key, rowIndex); overlayRef.detach()">TO LOWER CASE</ch-menu-item>
+          </ch-menu>
+        </ng-template>
+        <div *chHeaderTableCell="let col" >
+          {{col.label}} ({{col.type}})
+        </div>
+        <input trueEditableFieldInput [ngModel]="value" type="text">
+      </true-editable-field>
+    </ng-container>
+    <ng-container [chTableCol]="DataTypes.number">
+      <div *chHeaderTableCell="let col">
+        {{col.label}} ({{col.type}})
+      </div>
+      <true-editable-field *chTableCell="let value">
+        <input trueEditableFieldInput [ngModel]="value" type="number">
+      </true-editable-field>
+    </ng-container>
+    <ng-container [chTableCol]="DataTypes.email">
+      <div *chHeaderTableCell="let col">
+        {{col.label}} ({{col.type}})
+      </div>
+      <true-editable-field *chTableCell="let value">
+        <input trueEditableFieldInput [ngModel]="value" type="email">
+      </true-editable-field>
+    </ng-container>
+    <ng-container [chTableCol]="DataTypes.dateTime">
+      <div *chHeaderTableCell="let col">
+        {{col.label}} ({{col.type}})
+      </div>
+      <true-editable-field *chTableCell="let value">
+        <input trueEditableFieldInput [ngModel]="value | date" type="date">
+      </true-editable-field>
+    </ng-container>
+  </ch-table>
 </div>
 

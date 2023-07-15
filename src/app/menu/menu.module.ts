@@ -1,11 +1,12 @@
 import { NgModule } from '@angular/core';
-import { ContextMenuComponent } from './context-menu.component';
-import { ContextMenuDirective } from './context-menu.directive';
+import { MenuComponent } from './menu.component';
+import { MenuDirective } from './menu.directive';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { MenuItemComponent } from './menu-item/menu-item.component';
 
 @NgModule({
-  declarations: [ContextMenuComponent, ContextMenuDirective],
+  declarations: [MenuComponent, MenuItemComponent, MenuDirective],
   imports: [OverlayModule],
-  exports: [ContextMenuComponent, ContextMenuDirective]
+  exports: [MenuComponent, MenuItemComponent, MenuDirective]
 })
-export class ContextMenuModule {}
+export class MenuModule {}

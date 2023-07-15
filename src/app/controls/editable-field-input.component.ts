@@ -1,11 +1,13 @@
-import { ChangeDetectionStrategy, Component, Directive, forwardRef, HostBinding, HostListener } from '@angular/core';
+import {
+  Component,
+  forwardRef,
+  Input
+} from '@angular/core';
 import {
   AbstractControl,
-  ControlValueAccessor,
   NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   ValidationErrors,
-  Validator
+  Validator, ValidatorFn
 } from '@angular/forms';
 
 @Component({
@@ -13,54 +15,31 @@ import {
   selector: 'input[trueEditableFieldInput], textarea[trueEditableFieldInput], select[trueEditableFieldInput]',
   providers: [
     {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EditableFieldInputDirective),
-      multi: true,
-    },
-    {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EditableFieldInputDirective),
+      useExisting: forwardRef(() => EditableFieldInputComponent),
       multi: true,
     }
   ],
   template: '',
-  styleUrls: ['./editable-field.component.scss'],
+  styleUrls: ['./editable-field-input.component.scss'],
 })
-export class EditableFieldInputDirective implements ControlValueAccessor, Validator {
-  @HostBinding('value')
-  value: any;
+export class EditableFieldInputComponent implements Validator {
 
-  @HostBinding('disabled')
-  disabled = false;
-
-  @HostBinding('readonly')
-  readonly = false;
-
-  @HostListener('input', ['$event'])
-  onInput($event: InputEvent) {
-      console.log($event);
-  }
-
-  private _onChange?: (value: any) => void;
-  private _onTouched?: () => void;
-
-  registerOnChange(fn: any): void {
-    this._onChange = fn;
-  }
-
-  registerOnTouched(fn: any): void {
-    this._onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-  }
-
-  writeValue(obj: any): void {
-    this.value = obj;
-  }
+  @Input() validators: ValidatorFn[] = [];
 
   validate(control: AbstractControl): ValidationErrors | null {
-    return null;
+    if (!this.validators?.length) {
+      return null;
+    }
+
+    const errors =  this.validators
+      .map((validator) => validator(control))
+      .filter((errors) => !!errors);
+
+    if (!errors.length) {
+      return null;
+    }
+
+    return errors.reduce((acc, errors) => ({ ...acc, ...errors }), {});
   }
 }
