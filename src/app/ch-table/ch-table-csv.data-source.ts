@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { filter, Observable, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { v4 } from 'uuid';
 import {
-  ChTableDataSourceStore, DATA_TYPES, DataTypes,
+  ChTableDataSourceStore, DATA_TYPES_REGEXES, DATA_TYPES_WIDTHS, DataTypes,
   GenChTableDataSource,
   IChDataColumn,
   IChDataRow,
@@ -23,7 +23,7 @@ export interface ChLocalPaginationState<TData extends IChDataRow> extends IChDat
   page: number;
   limit: number;
   lastChunkSize: number;
-  url: string | null;
+  source: File | string | null;
   busy: boolean;
 }
 
@@ -31,13 +31,13 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
   readonly data$ = this.select(({ data }) => data);
   readonly page$ = this.select(({ page }) => page);
   readonly limit$ = this.select(({ limit }) => limit);
-  readonly url$ = this.select(({ url }) => url);
+  readonly source$ = this.select(({ source }) => source);
   readonly lastChunkSize$ = this.select(({ lastChunkSize }) => lastChunkSize);
   readonly busy$ = this.select(({ busy }) => busy);
 
   constructor(readonly _httpClient: HttpClient) {
     super({
-      url: null,
+      source: null,
       data: [],
       visibleData: [],
       columns: [],
@@ -52,13 +52,27 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
   readonly load = this.effect(
     (event$: Observable<void>) => event$
       .pipe(
-        withLatestFrom(this.url$),
-        switchMap(([, url]) => {
-          if (!url) {
+        withLatestFrom(this.source$),
+        switchMap(([, source]) => {
+          if (!source) {
             return of(null);
           }
 
-          return this._httpClient.get(url, { responseType: 'text' });
+          if (source instanceof File) {
+            return new Observable<string>((observer) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                observer.next(reader.result as string);
+                observer.complete();
+              };
+              reader.onerror = () => {
+                observer.error(reader.error);
+              };
+              reader.readAsText(source);
+            });
+          }
+
+          return this._httpClient.get(source, { responseType: 'text' });
         }),
         withLatestFrom(this.page$, this.limit$),
         tap(([result, page, limit]) => {
@@ -96,7 +110,8 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
               columns = values.map((label) => ({
                 label,
                 key: label.toLowerCase(),
-                type: DataTypes.unknown
+                type: DataTypes.unknown,
+                width: DATA_TYPES_WIDTHS[DataTypes.unknown],
               }));
               continue;
             }
@@ -108,7 +123,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
               row[column.key] = value;
 
               const type = dataTypes
-                .find((dataType) => DATA_TYPES[dataType]
+                .find((dataType) => DATA_TYPES_REGEXES[dataType]
                   .some((pattern) => value.match(pattern))) ?? DataTypes.unknown;
 
               const columnCounts = columnTypeCounts[column.key];
@@ -143,7 +158,8 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
             lastChunkSize: chunk.length,
             columns: columns.map((column) => ({
               ...column,
-              type: columnTypes[column.key] as DataTypes
+              type: columnTypes[column.key] as DataTypes,
+              width: DATA_TYPES_WIDTHS[columnTypes[column.key] as DataTypes],
             })),
           });
 
@@ -177,12 +193,12 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
     })
   ));
 
-  readonly setUrl = this.effect((event$: Observable<string>) => event$.pipe(
-    tap((url) => this.patchSate({ url })),
-    tap(() => this.load())
-  ))
-
-  // readonly setUrl = this.updater((state, url: string) => ({ ...state, url }));
+  readonly setSource = this.effect(
+    (event$: Observable<File | string>) => event$.pipe(
+      tap((source) => this.patchSate({ source })),
+      tap(() => this.load())
+    )
+  );
 
   readonly changeCase = this.updater((state, stringCase: 'lower' | 'upper', columnKey: string, index?: number) => {
     const data = state.data as any[];
@@ -222,8 +238,8 @@ export class ChURLTableDataSource<TData extends IChDataRow = IChDataRow>
     super(new ChURLTableDataSourceStore(httpClient));
   }
 
-  setUrl(url: string): void {
-    this._store.setUrl(url);
+  setSource(source: File | string): void {
+    this._store.setSource(source);
   }
 
   changeCase(stringCase: 'lower' | 'upper', columnKey: string, index?: number) {

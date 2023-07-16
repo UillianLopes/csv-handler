@@ -24,7 +24,6 @@ import {
   styleUrls: ['./editable-field-input.component.scss'],
 })
 export class EditableFieldInputComponent implements Validator {
-
   @Input() validators: ValidatorFn[] = [];
 
   validate(control: AbstractControl): ValidationErrors | null {

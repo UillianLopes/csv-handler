@@ -4,9 +4,11 @@
 <div class="ch-table"
      cdkVirtualScrollingElement
      *ngIf="dataSource$() as dataSource; else provideADataSourceTemplate">
-  <div class="ch-table__row ch-table__row--header">
+  <div class="ch-table__row ch-table__row--header"
+       [style.height.px]="itemSize$()">
     <div class="ch-table__col"
-         *ngFor="let column of dataSource.columns$ | async">
+         *ngFor="let column of dataSource.columns$ | async"
+         [style.width.px]="column.width">
       <ng-container *ngIf="customCols$() as cols; else defaultHeaderCellTemplate">
         <ng-container *ngIf="cols[column.type] as col; else defaultHeaderCellTemplate">
           <ng-container *ngIf="col.headerCell as headerCell; else defaultHeaderCellTemplate">
@@ -26,7 +28,8 @@
 
   <ng-template #columnsTemplate let-item let-rowIndex="rowIndex">
     <div class="ch-table__col"
-         *ngFor="let column of dataSource.columns$ | async;">
+         *ngFor="let column of dataSource.columns$ | async;"
+          [style.width.px]="column.width">
       <ng-container *ngIf="customCols$() as cols; else columnTemplate">
         <ng-container *ngIf="cols[column.type] as col; else columnTemplate">
           <ng-container *ngIf="col.cell as cell; else columnTemplate">

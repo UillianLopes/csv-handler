@@ -1,17 +1,43 @@
 .main {
-  display: block;
   height: 100%;
   width: 100%;
-  padding: 12px;
+
+  display: grid;
+
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0px, 1fr);
+
+  &__body {
+
+  }
+
+  &__header {
+
+  }
+
+  &__row {
+    display: flex;
+    flex-direction: row;
+  }
+
+  &__file {
+    border: 1px dashed #ccc;
+    padding: 16px;
+  }
 }
 
-.col {
+.custom-col {
   width: 100%;
   max-width: 100%;
   padding: 0 4px;
+}
 
-  input {
-    width: 100%;
-    max-width: 100%;
-  }
+
+.header-cell {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 8px;
 }
