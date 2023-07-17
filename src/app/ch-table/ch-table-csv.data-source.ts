@@ -14,6 +14,14 @@ const STRING_CASE_FUNCTIONS: { [key: string ]: (v: string) => string } = {
   upper: (value: string) => value?.toUpperCase()
 };
 
+export type Delimiter = '\t' | ',' | ';';
+
+const DELIMITER_VALIDATIONS = {
+  '\t': /^([^\t\n]+)(;[^\t\n]+)*(\n([^\t\n]+)(;[^\t\n]+)*)*$/,
+  ';': /^([^;\n]+)(;[^;\n]+)*(\n([^;\n]+)(;[^;\n]+)*)*$/,
+  ',': /^([^,\n]+)(,[^,\n]+)*(\n([^,\n]+)(,[^,\n]+)*)*$/,
+}
+
 interface ColumnTypeCounts {
   [key: string]: Partial<{ [key in DataTypes]: number }>
 }
@@ -225,8 +233,8 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
     return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
   }
 
-  isCSV(value: string) {
-    const pattern = /^([^,\n]+)(,[^,\n]+)*(\n([^,\n]+)(,[^,\n]+)*)*$/;
+  isCSV(value: string, delimiter: Delimiter = ',') {
+    const pattern = DELIMITER_VALIDATIONS[delimiter];
     return pattern.test(value);
   }
 }
