@@ -33,6 +33,7 @@ export interface ChLocalPaginationState<TData extends IChDataRow> extends IChDat
   lastChunkSize: number;
   source: File | string | null;
   busy: boolean;
+  delimiter: Delimiter;
 }
 
 export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTableDataSourceStore<ChLocalPaginationState<TData>, TData> {
@@ -41,7 +42,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
   readonly limit$ = this.select(({ limit }) => limit);
   readonly source$ = this.select(({ source }) => source);
   readonly lastChunkSize$ = this.select(({ lastChunkSize }) => lastChunkSize);
-  readonly busy$ = this.select(({ busy }) => busy);
+  readonly delimiter$ = this.select(({ delimiter }) => delimiter);
 
   constructor(readonly _httpClient: HttpClient) {
     super({
@@ -54,6 +55,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
       page: 1,
       lastChunkSize: 0,
       busy: false,
+      delimiter: ','
     });
   }
 
@@ -82,8 +84,8 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
 
           return this._httpClient.get(source, { responseType: 'text' });
         }),
-        withLatestFrom(this.page$, this.limit$),
-        tap(([result, page, limit]) => {
+        withLatestFrom(this.page$, this.limit$, this.delimiter$),
+        tap(([result, page, limit, delimiter]) => {
           if (!result) {
             return;
           }
@@ -98,7 +100,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
           for(let index = 0; index < lines.length; index++) {
             const line = lines[index];
 
-            if (!this.isCSV(line)){
+            if (!this.isCSV(line, delimiter)){
               columns && body.push(
                 Object.fromEntries(
                   columns
@@ -229,11 +231,14 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
     }
   })
 
+
+  readonly setDelimiter = this.updater((state, delimiter: Delimiter) => ({ ...state, delimiter }));
+
   paginate(array: Array<TData>, pageSize: number, pageNumber: number) {
     return array.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
   }
 
-  isCSV(value: string, delimiter: Delimiter = ',') {
+  isCSV(value: string, delimiter: Delimiter) {
     const pattern = DELIMITER_VALIDATIONS[delimiter];
     return pattern.test(value);
   }
@@ -252,5 +257,9 @@ export class ChURLTableDataSource<TData extends IChDataRow = IChDataRow>
 
   changeCase(stringCase: 'lower' | 'upper', columnKey: string, index?: number) {
     this._store.changeCase(stringCase, columnKey, index);
+  }
+
+  setDelimiter(value: Delimiter) {
+    this._store.setDelimiter(value);
   }
 }

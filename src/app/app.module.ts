@@ -5,7 +5,7 @@ import { AppRoutingModule } from "./app-routing.module";
 import { AppComponent } from "./app.component";
 import { ChTableModule } from './ch-table/ch-table.module';
 import { HttpClientModule } from '@angular/common/http';
-import { FormsModule } from '@angular/forms';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from 'ngx-mask';
 import { EditableFieldComponent } from './controls/editable-field.component';
 import { EditableFieldInputComponent } from './controls/editable-field-input.component';
@@ -27,7 +27,8 @@ import { EllipsisTextComponent } from './ellipsis-text/ellipsis-text.component';
     EditableFieldInputComponent,
     MenuModule,
     StringToDatePipe,
-    EllipsisTextComponent
+    EllipsisTextComponent,
+    ReactiveFormsModule
   ],
   providers: [
     provideNgxMask()
