@@ -8,7 +8,7 @@ import {
   IChDataRow,
   IChDataSourceState
 } from './ch-table.data-source';
-
+import { parse } from 'papaparse'
 const STRING_CASE_FUNCTIONS: { [key: string ]: (v: string) => string } = {
   lower: (value: string) => value?.toLowerCase(),
   upper: (value: string) => value?.toUpperCase()
@@ -17,9 +17,9 @@ const STRING_CASE_FUNCTIONS: { [key: string ]: (v: string) => string } = {
 export type Delimiter = '\t' | ',' | ';';
 
 const DELIMITER_VALIDATIONS = {
-  '\t': /^([^\t\n]+)(;[^\t\n]+)*(\n([^\t\n]+)(;[^\t\n]+)*)*$/,
-  ';': /^([^;\n]+)(;[^;\n]+)*(\n([^;\n]+)(;[^;\n]+)*)*$/,
-  ',': /^([^,\n]+)(,[^,\n]+)*(\n([^,\n]+)(,[^,\n]+)*)*$/,
+  '\t': /^([^\t]*\t)*[^\t]*$/,
+  ';': /^([^;]*;)*[^;]*$/,
+  ',': /^([^,]*,)*[^,]*$/,
 }
 
 interface ColumnTypeCounts {
@@ -90,8 +90,20 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
             return;
           }
 
+          console.log({
+            result,
+            delimiter
+          })
+
           const beginTime = new Date().getTime();
-          const lines = result.split('\n');
+          const data = parse<any>(result, {
+            delimiter
+          });
+          console.log(data);
+          const lines = result.split('\r\n');
+          console.log({
+            lines: lines.filter((_, i) => i < 200)
+          });
           let columns: IChDataColumn[]  | null = null;
           let body: TData[] = [];
           const columnTypeCounts: ColumnTypeCounts = { };
@@ -99,6 +111,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
 
           for(let index = 0; index < lines.length; index++) {
             const line = lines[index];
+
 
             if (!this.isCSV(line, delimiter)){
               columns && body.push(
@@ -114,7 +127,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
               continue;
             }
 
-            const values = line.split(',');
+            const values = line.split(new RegExp(delimiter, 'g'));
 
             if (!columns) {
               columns = values.map((label) => ({
@@ -129,6 +142,11 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
             const row: any  = { CH_ROW_ID: v4() };
             for (let colIndex = 0; colIndex < values.length; colIndex++) {
               const column = columns[colIndex];
+
+              if (!column) {
+                continue;
+              }
+
               const value = values[colIndex];
               row[column.key] = value;
 
@@ -137,10 +155,10 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
                   .some((pattern) => value.match(pattern))) ?? DataTypes.unknown;
 
               const columnCounts = columnTypeCounts[column.key];
-              if (columnCounts) {
+              if (columnCounts && !value) {
                 columnCounts[type] = (columnCounts[type] ?? 0) + 1;
               } else {
-                columnTypeCounts[column.key] = { [type]: 1 };
+                columnTypeCounts[column.key] = { [type]: DataTypes.unknown };
               }
             }
 
