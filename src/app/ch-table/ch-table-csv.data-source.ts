@@ -85,50 +85,25 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
           return this._httpClient.get(source, { responseType: 'text' });
         }),
         withLatestFrom(this.page$, this.limit$, this.delimiter$),
-        tap(([result, page, limit, delimiter]) => {
-          if (!result) {
+        tap(([csv, page, limit, delimiter]) => {
+          if (!csv) {
             return;
           }
 
-          console.log({
-            result,
-            delimiter
-          })
-
           const beginTime = new Date().getTime();
-          const data = parse<any>(result, {
+          const parseResult = parse<string[]>(csv, {
             delimiter
           });
-          console.log(data);
-          const lines = result.split('\r\n');
-          console.log({
-            lines: lines.filter((_, i) => i < 200)
-          });
+          const parsedLines = parseResult.data;
+
           let columns: IChDataColumn[]  | null = null;
           let body: TData[] = [];
+
           const columnTypeCounts: ColumnTypeCounts = { };
           const dataTypes = Object.values(DataTypes)
 
-          for(let index = 0; index < lines.length; index++) {
-            const line = lines[index];
-
-
-            if (!this.isCSV(line, delimiter)){
-              columns && body.push(
-                Object.fromEntries(
-                  columns
-                    .map((key) => [key, ''])
-                    .concat([
-                      ['CH_ROW_ID', v4()],
-                      ['CH_ROW_ERROR', 'It is not a csv line']
-                    ])
-                )
-              )
-              continue;
-            }
-
-            const values = line.split(new RegExp(delimiter, 'g'));
-
+          for(let index = 0; index < parsedLines.length; index++) {
+            const values = parsedLines[index];
             if (!columns) {
               columns = values.map((label) => ({
                 label,
@@ -191,7 +166,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
             })),
           });
 
-          console.log({
+          console.log('TIME -> ', {
             beginTime,
             finishTime,
             elapsedTime: finishTime - beginTime
@@ -223,6 +198,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
 
   readonly setSource = this.effect(
     (event$: Observable<File | string>) => event$.pipe(
+      tap((event$) => console.log('DATA SOURCE -> ', event$)),
       tap((source) => this.patchSate({ source })),
       tap(() => this.load())
     )
@@ -260,6 +236,20 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
     const pattern = DELIMITER_VALIDATIONS[delimiter];
     return pattern.test(value);
   }
+
+  setValue = this.updater(( state, value: string, columnKey: string, rowIndex: number) => {
+    const data = state.data as any[];
+    data[rowIndex][columnKey] = value;
+
+    const visibleData = state.visibleData as any[];
+    visibleData[rowIndex][columnKey] = value;
+
+    return {
+      ...state,
+      data,
+      visibleData,
+    };
+  });
 }
 
 export class ChURLTableDataSource<TData extends IChDataRow = IChDataRow>
@@ -273,11 +263,19 @@ export class ChURLTableDataSource<TData extends IChDataRow = IChDataRow>
     this._store.setSource(source);
   }
 
+  loadMore(): void {
+    this._store.loadMore();
+  }
+
   changeCase(stringCase: 'lower' | 'upper', columnKey: string, index?: number) {
     this._store.changeCase(stringCase, columnKey, index);
   }
 
   setDelimiter(value: Delimiter) {
     this._store.setDelimiter(value);
+  }
+
+  updateValue(value: string, columnKey: string, rowIndex: number) {
+      this._store.setValue(value, columnKey, rowIndex);
   }
 }

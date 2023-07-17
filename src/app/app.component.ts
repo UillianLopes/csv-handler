@@ -15,13 +15,10 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly unsubscribe$$ = new Subject<void>();
   readonly dataSource = new ChURLTableDataSource(this.httpClient);
   readonly DataTypes = DataTypes;
-
   readonly emailValidators = [Validators.email];
-
   readonly delimiterControl = new FormControl<Delimiter>(',');
 
-  constructor (private readonly httpClient: HttpClient) {
-  }
+  constructor(private readonly httpClient: HttpClient) { }
 
   changeFile(event: Event): void {
     const target = event.target as HTMLInputElement;
@@ -29,6 +26,8 @@ export class AppComponent implements OnInit, OnDestroy {
     if (!file) {
       return;
     }
+
+    target.value = '';
     this.dataSource.setSource(file);
 
   }
@@ -51,6 +50,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
         this.dataSource.setDelimiter(value);
       });
+  }
+
+  loadMore(): void {
+    this.dataSource.loadMore();
+  }
+
+  updateValue(value: string, columnKey: string, index: number): void {
+    this.dataSource.updateValue(value, columnKey, index);
   }
 
   ngOnDestroy(): void {

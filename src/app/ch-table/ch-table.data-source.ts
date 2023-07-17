@@ -37,6 +37,9 @@ export interface IChDataRow {
     [key: string]: string
   };
   CH_ROW_ERROR?: string,
+  CH_COL_TYPES: {
+    [key: string]: DataTypes
+  }
 }
 
 export interface IChDataColumn {
@@ -60,27 +63,12 @@ export abstract class ChTableDataSourceStore<TState extends IChDataSourceState<T
   protected constructor(initialState: TState) {
     super(initialState);
   }
-
-  readonly abstract loadMore: () => void;
-  readonly abstract load: () => void;
-
-  readonly setData = this.updater((state, data: any[]) => ({
-    ...state,
-    data,
-  }));
-
-  readonly setVisibleData = this.updater((state, visibleData: any[]) => ({
-    ...state,
-    visibleData,
-  }));
 }
 
 export abstract class ChTableDataSource<TSource, TData extends IChDataRow> extends DataSource<TData> {
 
   abstract readonly columns$: Observable<IChDataColumn[]>;
 
-  abstract load(): void;
-  abstract loadMore(): void;
   abstract changeCase(stringCase: 'lower' | 'upper', columnKey: string, index?: number): void;
 }
 
@@ -101,13 +89,5 @@ export abstract class GenChTableDataSource<
   }
 
   disconnect(collectionViewer: CollectionViewer): void {}
-
-  override load(): void {
-    this._store.load();
-  }
-
-  override loadMore(): void {
-    this._store.loadMore();
-  }
 }
 

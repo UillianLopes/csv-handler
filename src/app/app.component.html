@@ -21,7 +21,8 @@
     </div>
   </div>
   <div class="main__body">
-  <ch-table [dataSource]="dataSource">
+  <ch-table [dataSource]="dataSource"
+            (infiniteScroll)="loadMore()">
     <ng-container [chTableCol]="DataTypes.text">
       <div *chHeaderTableCell="let col"
            [chMenu]="textHeaderColumnOptionsTemplate"
@@ -37,46 +38,47 @@
       </div>
       <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
                            [chMenu]="textColumnOptionsTemplate"
-                           trigger="rightClick">
+                           trigger="rightClick"
+                           type="text"
+                           [ngModel]="value"
+                           (confirmed)="this.updateValue($event, column.key, rowIndex)">
         <ng-template #textColumnOptionsTemplate let-overlayRef="overlayRef">
           <ch-menu>
             <ch-menu-item (click)="changeCase('upper', column.key, rowIndex); overlayRef.detach()">TO UPPER CASE</ch-menu-item>
             <ch-menu-item (click)="changeCase('lower', column.key, rowIndex); overlayRef.detach()">TO LOWER CASE</ch-menu-item>
           </ch-menu>
         </ng-template>
-        <input trueEditableFieldInput [ngModel]="value" type="text">
-        <ch-ellipsis-text>{{value}}</ch-ellipsis-text>
       </true-editable-field>
     </ng-container>
     <ng-container [chTableCol]="DataTypes.number">
       <div *chHeaderTableCell="let col" class="header-cell">
         <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
       </div>
-      <true-editable-field *chTableCell="let value">
-        <input trueEditableFieldInput [ngModel]="value" type="number">
-        <ch-ellipsis-text>{{value}}</ch-ellipsis-text>
+      <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
+                           [ngModel]="value"
+                           type="number"
+                           (confirmed)="this.updateValue($event, column.key, rowIndex)">
       </true-editable-field>
     </ng-container>
     <ng-container [chTableCol]="DataTypes.email">
-      <div *chHeaderTableCell="let col"  class="header-cell">
+      <div *chHeaderTableCell="let col" class="header-cell">
         <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
       </div>
-      <true-editable-field *chTableCell="let value">
-        <input trueEditableFieldInput
-               [validators]="emailValidators"
-               [ngModel]="value"
-               type="email">
-        <ch-ellipsis-text>{{value}}</ch-ellipsis-text>
+      <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
+                           type="email"
+                           [validators]="emailValidators"
+                           [ngModel]="value"
+                           (confirmed)="this.updateValue($event, column.key, rowIndex)">
       </true-editable-field>
     </ng-container>
     <ng-container [chTableCol]="DataTypes.dateTime">
       <div *chHeaderTableCell="let col" class="header-cell">
         <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
       </div>
-      <true-editable-field *chTableCell="let value" #editableFieldComponent>
-        <input trueEditableFieldInput
-               [ngModel]="value | stringToDate | date: 'yyyy-MM-dd HH:mm:ss'"
-               type="datetime-local">
+      <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
+                           [ngModel]="value | stringToDate | date: 'yyyy-MM-dd HH:mm:ss'"
+                           type="datetime-local"
+                           (confirmed)="this.updateValue($event, column.key, rowIndex)">
       </true-editable-field>
     </ng-container>
   </ch-table>

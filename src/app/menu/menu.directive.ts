@@ -110,8 +110,6 @@ export class MenuDirective implements OnInit {
       return;
     }
 
-    console.log(this.template);
-
     this.close();
 
     const overlay = this.overlay.create({

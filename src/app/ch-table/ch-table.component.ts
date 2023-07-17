@@ -5,7 +5,7 @@ import {
   effect,
   Input,
   OnDestroy,
-  OnInit, QueryList,
+  OnInit, Output, QueryList,
   signal,
   TrackByFunction, ViewChild,
 } from "@angular/core";
@@ -49,6 +49,9 @@ export class ChTableComponent<TDataSource extends ChTableDataSource<any, any>>
   readonly viewChange = this.viewChange$.asObservable();
   readonly trackBy: TrackByFunction<any> = (index: number, value: any) => value['CH_ROW_ID'];
 
+
+  @Output() readonly infiniteScroll = new Subject<void>();
+
   @ContentChildren(ChTableColDirective) cols!: QueryList<ChTableColDirective>;
 
   @ViewChild(CdkVirtualScrollViewport) viewport?: CdkVirtualScrollViewport;
@@ -77,7 +80,7 @@ export class ChTableComponent<TDataSource extends ChTableDataSource<any, any>>
       return;
     }
 
-    dataSource.loadMore();
+    this.infiniteScroll.next();
   }
 
   changeCase(stringCase: 'lower' | 'upper', columnKey: string, index?: number) {

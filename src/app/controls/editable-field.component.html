@@ -1,2 +1,20 @@
-
-<ng-content select="[trueEditableFieldInput]"></ng-content>
+<div>
+  <input
+    trueEditableFieldInput
+    [formControl]="input"
+    [type]="type$()"
+    (keydown.enter)="confirm($event)"
+    (keydown.escape)="cancel()"
+    (keydown.tab)="confirm($event)"
+    [autofocus]="true">
+</div>
+<div *ngIf="input.dirty">
+   <span class="editable-field__toggle material-symbols-rounded" (click)="cancel()">
+    clear
+  </span>
+  <span *ngIf="!errors$()"
+        class="editable-field__toggle material-symbols-rounded"
+        (click)="confirm($event)">
+    check
+  </span>
+</div>
