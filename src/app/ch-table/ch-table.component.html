@@ -50,7 +50,7 @@
                                cdkScrollable
                                [itemSize]="itemSize$()"
                                (scrolledIndexChange)="setCurrentIndex($event)">
-    <div *cdkVirtualFor="let item of items$(); trackBy: trackBy; index as rowIndex; templateCacheSize: 0"
+    <div *cdkVirtualFor="let item of items$(); trackBy: trackBy; index as rowIndex; templateCacheSize: 500"
          class="ch-table__row"
          [style.height.px]="itemSize$()">
         <ng-container [ngTemplateOutlet]="columnsTemplate"

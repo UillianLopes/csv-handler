@@ -16,7 +16,6 @@ export class AppComponent implements OnInit, OnDestroy {
   readonly dataSource = new ChURLTableDataSource(this.httpClient);
   readonly DataTypes = DataTypes;
   readonly emailValidators = [Validators.email];
-  readonly delimiterControl = new FormControl<Delimiter>(',');
 
   constructor(private readonly httpClient: HttpClient) { }
 
@@ -38,18 +37,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit (): void {
     this.dataSource.setSource('/assets/table.csv');
-
-
-    this.delimiterControl
-      .valueChanges
-      .pipe(takeUntil(this.unsubscribe$$))
-      .subscribe((value) => {
-        if (!value) {
-          return;
-        }
-
-        this.dataSource.setDelimiter(value);
-      });
   }
 
   loadMore(): void {

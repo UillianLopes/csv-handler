@@ -84,16 +84,14 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
 
           return this._httpClient.get(source, { responseType: 'text' });
         }),
-        withLatestFrom(this.page$, this.limit$, this.delimiter$),
-        tap(([csv, page, limit, delimiter]) => {
+        withLatestFrom(this.limit$, this.delimiter$),
+        tap(([csv, limit, delimiter]) => {
           if (!csv) {
             return;
           }
 
           const beginTime = new Date().getTime();
-          const parseResult = parse<string[]>(csv, {
-            delimiter
-          });
+          const parseResult = parse<string[]>(csv);
           const parsedLines = parseResult.data;
 
           let columns: IChDataColumn[]  | null = null;
@@ -127,13 +125,13 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
 
               const type = dataTypes
                 .find((dataType) => DATA_TYPES_REGEXES[dataType]
-                  .some((pattern) => value.match(pattern))) ?? DataTypes.unknown;
+                  .some((pattern) => value && value.match(pattern))) ?? DataTypes.unknown;
 
               const columnCounts = columnTypeCounts[column.key];
               if (columnCounts && !value) {
                 columnCounts[type] = (columnCounts[type] ?? 0) + 1;
               } else {
-                columnTypeCounts[column.key] = { [type]: DataTypes.unknown };
+                columnTypeCounts[column.key] = { [type]: 1 };
               }
             }
 
@@ -144,7 +142,8 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
             return;
           }
 
-          const chunk = this.paginate(body, limit, page);
+          const page = 1;
+          const chunk = this.paginate(body, limit, 1);
           const finishTime = new Date().getTime();
           const columnTypes = Object.fromEntries(Object
             .entries(columnTypeCounts)
@@ -164,6 +163,7 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
               type: columnTypes[column.key] as DataTypes,
               width: DATA_TYPES_WIDTHS[columnTypes[column.key] as DataTypes],
             })),
+            page,
           });
 
           console.log('TIME -> ', {
