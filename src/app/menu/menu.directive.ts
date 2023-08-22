@@ -2,7 +2,7 @@
 import { ConnectedPosition, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { Directive, ElementRef, HostListener, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { combineLatest, filter, fromEvent, merge, Observable, Subject, takeUntil } from 'rxjs';
+import { combineLatest, filter, fromEvent, merge, Observable, Subject, takeUntil, tap } from 'rxjs';
 
 export enum ChOverlayPosition {
   top,
@@ -53,6 +53,8 @@ export function eventOutsideOverlay(
 ): Observable<Event> {
   return fromEvent<Event>(document, eventName).pipe(
     filter((event) => {
+
+      console.log('SEVENT -> ', event.target);
       const clickTarget = event.target as HTMLElement;
 
       const notOrigin = clickTarget !== origin;
@@ -99,8 +101,7 @@ export class MenuDirective implements OnInit {
     )
       .pipe(takeUntil(this.destroyed$))
       .subscribe((event) => {
-        event?.stopPropagation();
-        event?.preventDefault();
+        event.preventDefault();
         this.open();
       });
   }
@@ -151,7 +152,7 @@ export class MenuDirective implements OnInit {
             .subscribe(() => this.close());
           break;
         case 'hover':
-          eventOutsideOverlay('mouseenter', overlay, this.elementRef.nativeElement)
+          fromEvent(this.elementRef.nativeElement, 'mouseleave')
             .pipe(takeUntil(this.destroyed$), takeUntil(this.overlayRef.detachments()))
             .subscribe(() => this.close());
           break;

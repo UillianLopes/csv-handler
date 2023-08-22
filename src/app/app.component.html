@@ -26,7 +26,7 @@
             <ch-menu-item (click)="changeCase('lower', col.key); overlayRef.detach()">TO LOWER CASE</ch-menu-item>
           </ch-menu>
         </ng-template>
-        <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
+        <ch-ellipsis-text>{{col.label}}</ch-ellipsis-text>
       </div>
       <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
                            [chMenu]="textColumnOptionsTemplate"
@@ -72,6 +72,17 @@
                            type="datetime-local"
                            (confirmed)="this.updateValue($event, column.key, rowIndex)">
       </true-editable-field>
+    </ng-container>
+    <ng-container [chTableCol]="DataTypes.unknown">
+      <div *chHeaderTableCell="let col" class="header-cell">
+        <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
+      </div>
+      <div *chTableCell="let value" class="custom-col">
+        <ng-template #tooltipTemplate>
+          {{value}}
+        </ng-template>
+        <ch-ellipsis-text [chMenu]="tooltipTemplate" trigger="hover">{{value}}</ch-ellipsis-text>
+      </div>
     </ng-container>
   </ch-table>
   </div>

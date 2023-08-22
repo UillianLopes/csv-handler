@@ -4,8 +4,7 @@
 <div class="ch-table"
      cdkVirtualScrollingElement
      *ngIf="dataSource$() as dataSource; else provideADataSourceTemplate">
-  <div class="ch-table__row ch-table__row--header"
-       [style.height.px]="itemSize$()">
+  <div class="ch-table__row ch-table__row--header">
     <div class="ch-table__col"
          *ngFor="let column of dataSource.columns$ | async"
          [style.width.px]="column.width">
