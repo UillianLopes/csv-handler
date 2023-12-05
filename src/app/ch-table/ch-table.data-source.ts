@@ -51,12 +51,10 @@ export interface IChDataColumn {
 
 export interface IChDataSourceState<TData extends IChDataRow> {
   visibleData: TData[];
-  isLoading: boolean;
   columns: IChDataColumn[];
 }
 
 export abstract class ChTableDataSourceStore<TState extends IChDataSourceState<TData>, TData extends IChDataRow> extends Store<TState> {
-  readonly isLoading$ = this.select(({ isLoading }) => isLoading);
   readonly visibleData$ = this.select(({ visibleData }) => visibleData);
   readonly columns$ = this.select(({ columns }) => columns);
 
