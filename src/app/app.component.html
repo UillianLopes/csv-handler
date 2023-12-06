@@ -42,7 +42,17 @@
         </ng-template>
       </true-editable-field>
     </ng-container>
-    <ng-container [chTableCol]="DataTypes.number">
+    <ng-container [chTableCol]="DataTypes.integer">
+      <div *chHeaderTableCell="let col" class="header-cell">
+        <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
+      </div>
+      <true-editable-field *chTableCell="let value; let column=column; let rowIndex=rowIndex"
+                           [ngModel]="value"
+                           type="number"
+                           (confirmed)="this.updateValue($event, column.key, rowIndex)">
+      </true-editable-field>
+    </ng-container>
+    <ng-container [chTableCol]="DataTypes.float">
       <div *chHeaderTableCell="let col" class="header-cell">
         <ch-ellipsis-text>{{col.label}} ({{col.type}})</ch-ellipsis-text>
       </div>

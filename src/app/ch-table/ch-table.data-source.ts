@@ -6,17 +6,19 @@ export enum DataTypes {
   dateTime = 'dateTime',
   date = 'date',
   email = 'email',
-  number = 'number',
+  integer = 'integer',
+  float = 'float',
   text = 'text',
   unknown = 'unknown',
 }
 
 export const DATA_TYPES_REGEXES: Record<DataTypes, RegExp[]> = {
-  [DataTypes.dateTime]: [/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/],
+  [DataTypes.dateTime]: [/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ [+-]\d{2}:\d{2}$/],
   [DataTypes.date]: [/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/],
   [DataTypes.email]: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/],
-  [DataTypes.number]: [/^[0-9]*$/],
-  [DataTypes.text]: [/^[a-zA-Z0-9\s]*$/],
+  [DataTypes.integer]: [/^[0-9]*$/],
+  [DataTypes.float]: [/^[-+]?[0-9]*\.?[0-9]+$/],
+  [DataTypes.text]: [/.*/],
   [DataTypes.unknown]: [],
 }
 
@@ -24,8 +26,9 @@ export const DATA_TYPES_WIDTHS: Record<DataTypes, number> = {
   [DataTypes.dateTime]: 230,
   [DataTypes.date]: 200,
   [DataTypes.email]: 200,
-  [DataTypes.number]: 200,
+  [DataTypes.integer]: 200,
   [DataTypes.text]: 200,
+  [DataTypes.float]: 200,
   [DataTypes.unknown]: 200,
 }
 

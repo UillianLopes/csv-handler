@@ -2,13 +2,17 @@ import { HttpClient } from '@angular/common/http';
 import { filter, Observable, of, switchMap, tap, withLatestFrom } from 'rxjs';
 import { v4 } from 'uuid';
 import {
-  ChTableDataSourceStore, DATA_TYPES_REGEXES, DATA_TYPES_WIDTHS, DataTypes,
+  ChTableDataSourceStore,
+  DATA_TYPES_REGEXES,
+  DATA_TYPES_WIDTHS,
+  DataTypes,
   GenChTableDataSource,
   IChDataColumn,
   IChDataRow,
   IChDataSourceState
 } from './ch-table.data-source';
 import { parse } from 'papaparse'
+
 const STRING_CASE_FUNCTIONS: { [key: string ]: (v: string) => string } = {
   lower: (value: string) => value?.toLowerCase(),
   upper: (value: string) => value?.toUpperCase()
@@ -34,6 +38,94 @@ export interface ChLocalPaginationState<TData extends IChDataRow> extends IChDat
   source: File | string | null;
   busy: boolean;
   delimiter: Delimiter;
+}
+
+function loadFile<TData>(source: File | string): Observable<{ body: TData[], columnTypes: { [key: string]: string }, columns: IChDataColumn[] }> {
+  return new Observable((subscriber) => {
+    const dataTypes = Object.values(DataTypes)
+    const columnTypeCounts: ColumnTypeCounts = { };
+
+    let columns: IChDataColumn[]  | null = null;
+    let body: TData[] = [];
+    const beginTime = new Date().getTime();
+
+    parse<string[]>(source, {
+      worker: true,
+      step: (step) => {
+        const values = step.data;
+        if (!columns) {
+          columns = values.map((label) => ({
+            label,
+            key: label.toLowerCase(),
+            type: DataTypes.unknown,
+            width: DATA_TYPES_WIDTHS[DataTypes.unknown],
+          }));
+          return;
+        }
+
+        const row: any  = { CH_ROW_ID: v4() };
+        for (let colIndex = 0; colIndex < values.length; colIndex++) {
+          const column = columns[colIndex];
+
+          if (!column) {
+            continue;
+          }
+
+          const value = values[colIndex];
+          row[column.key] = value;
+
+          const type = dataTypes
+            .find((dataType) => DATA_TYPES_REGEXES[dataType]
+              .some((pattern) => value && value.match(pattern))) ?? DataTypes.unknown;
+
+          const columnCounts = columnTypeCounts[column.key];
+          if (columnCounts && !value) {
+            columnCounts[type] = (columnCounts[type] ?? 0) + 1;
+          } else {
+            columnTypeCounts[column.key] = { [type]: 1 };
+          }
+        }
+
+        body.push(row);
+      },
+      complete: () => {
+        if (!columns) {
+          subscriber.complete();
+          return;
+        }
+
+        const columnTypes = Object.fromEntries(Object
+          .entries(columnTypeCounts)
+          .map(([column, typeCounts]) => [
+            column,
+            Object
+              .entries(typeCounts)
+              .sort(([, a], [, b]) => b - a)[0][0] ?? DataTypes.unknown
+          ]));
+
+
+        subscriber.next({
+          body,
+          columnTypes,
+          columns,
+        });
+
+        const finishTime = new Date().getTime();
+        console.log('METRICS -> ', {
+          beginTime,
+          finishTime,
+          elapsedTime: finishTime - beginTime,
+          lines: body.length,
+          columns: columns.length,
+        });
+        subscriber.complete();
+      },
+      error: (error) => {
+        subscriber.error(error);
+        subscriber.complete();
+      }
+    })
+  });
 }
 
 export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTableDataSourceStore<ChLocalPaginationState<TData>, TData> {
@@ -69,107 +161,29 @@ export class ChURLTableDataSourceStore<TData extends IChDataRow> extends ChTable
           }
 
           if (source instanceof File) {
-            return new Observable<string>((observer) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                observer.next(reader.result as string);
-                observer.complete();
-              };
-              reader.onerror = () => {
-                observer.error(reader.error);
-              };
-              reader.readAsText(source);
-            });
+            return loadFile<TData>(source);
           }
 
-          return this._httpClient.get(source, { responseType: 'text' });
+          return this._httpClient.get(source, { responseType: 'text' }).pipe(switchMap((content) => loadFile<TData>(content)));
         }),
         withLatestFrom(this.limit$, this.delimiter$),
         tap(([csv, limit, delimiter]) => {
           if (!csv) {
             return;
           }
-
-          const beginTime = new Date().getTime();
-          const parseResult = parse<string[]>(csv);
-          const parsedLines = parseResult.data;
-
-          let columns: IChDataColumn[]  | null = null;
-          let body: TData[] = [];
-
-          const columnTypeCounts: ColumnTypeCounts = { };
-          const dataTypes = Object.values(DataTypes)
-
-          for(let index = 0; index < parsedLines.length; index++) {
-            const values = parsedLines[index];
-            if (!columns) {
-              columns = values.map((label) => ({
-                label,
-                key: label.toLowerCase(),
-                type: DataTypes.unknown,
-                width: DATA_TYPES_WIDTHS[DataTypes.unknown],
-              }));
-              continue;
-            }
-
-            const row: any  = { CH_ROW_ID: v4() };
-            for (let colIndex = 0; colIndex < values.length; colIndex++) {
-              const column = columns[colIndex];
-
-              if (!column) {
-                continue;
-              }
-
-              const value = values[colIndex];
-              row[column.key] = value;
-
-              const type = dataTypes
-                .find((dataType) => DATA_TYPES_REGEXES[dataType]
-                  .some((pattern) => value && value.match(pattern))) ?? DataTypes.unknown;
-
-              const columnCounts = columnTypeCounts[column.key];
-              if (columnCounts && !value) {
-                columnCounts[type] = (columnCounts[type] ?? 0) + 1;
-              } else {
-                columnTypeCounts[column.key] = { [type]: 1 };
-              }
-            }
-
-            body.push(row);
-          }
-
-          if (!columns) {
-            return;
-          }
-
           const page = 1;
-          const chunk = this.paginate(body, limit, 1);
-          const finishTime = new Date().getTime();
-          const columnTypes = Object.fromEntries(Object
-            .entries(columnTypeCounts)
-            .map(([column, typeCounts]) => [
-              column,
-              Object
-                .entries(typeCounts)
-                .sort(([, a], [, b]) => b - a)[0][0] ?? DataTypes.unknown
-            ]));
+          const chunk = this.paginate(csv.body, limit, 1);
 
           this.patchSate({
-            data: body,
+            data: csv.body,
             visibleData: chunk,
             lastChunkSize: chunk.length,
-            columns: columns.map((column) => ({
+            columns: csv.columns.map((column) => ({
               ...column,
-              type: columnTypes[column.key] as DataTypes,
-              width: DATA_TYPES_WIDTHS[columnTypes[column.key] as DataTypes],
+              type: csv.columnTypes[column.key] as DataTypes,
+              width: DATA_TYPES_WIDTHS[csv.columnTypes[column.key] as DataTypes],
             })),
             page,
-          });
-
-          console.log('TIME -> ', {
-            beginTime,
-            finishTime,
-            elapsedTime: finishTime - beginTime
           });
         })
       )
